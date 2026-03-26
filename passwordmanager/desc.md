@@ -1,3 +1,5 @@
+# START OF CODE
+
 from tkinter import *
 from tkinter import messagebox #module of code, not a class
 from random import choice, randint, shuffle
