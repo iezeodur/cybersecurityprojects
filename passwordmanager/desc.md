@@ -25,7 +25,7 @@ def generate_pass():
     password_entry.insert(0, string=f"{password}")
     pyperclip.copy(password)#puts generated password on yourclipboard
 
-#SAVE PASS & SEARCH INFO
+## SAVE PASS & SEARCH INFO
 
 def search():
         website = website_entry.get()
