@@ -1,4 +1,5 @@
 # START OF CODE
+Tkinter is a crossplatform GUI toolkit, that allows creation of windows, buttons, text boxes, and more using Python.
 ```python
 from tkinter import *
 from tkinter import messagebox #module of code, not a class
@@ -7,7 +8,11 @@ import pyperclip #clips message
 import json
 
 FONT = "Felix Titling", 8
-#PASSWORD GENERATOR
+
+```
+# PASSWORD GENERATOR
+
+```pyton
 def generate_pass():
 
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -26,8 +31,11 @@ def generate_pass():
     password_entry.insert(0, string=f"{password}")
     pyperclip.copy(password)#puts generated password on yourclipboard
 
+```
+
 ## SAVE PASS & SEARCH INFO
 
+```python
 def search():
         website = website_entry.get()
         try:
@@ -88,7 +96,10 @@ def save():
             uname_entry.delete(0, END)
             password_entry.delete(0, END)#removes first character 0, to end or last character
 
+```
 # UI SETUP
+
+```python
 screen = Tk()
 screen.title("Password Manager")
 screen.config(padx=50, pady=50)
