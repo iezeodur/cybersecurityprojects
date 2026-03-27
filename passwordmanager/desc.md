@@ -33,7 +33,7 @@ def generate_pass():
 
 ```
 
-## SAVE PASS & SEARCH INFO
+## SAVE PASSWORD & SEARCH INFO
 
 ```python
 def search():
