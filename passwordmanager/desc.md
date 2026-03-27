@@ -6,7 +6,7 @@ from random import choice, randint, shuffle
 import pyperclip #clips message
 import json
 
-
+''' python
 FONT = "Felix Titling", 8
 #PASSWORD GENERATOR
 def generate_pass():
