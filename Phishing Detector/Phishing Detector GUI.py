@@ -7,12 +7,12 @@ import re
 from urllib.parse import urlparse
 
 
-# --- PHISHING CHECK ENGINE ---
+#check engine
 def check_phishing(url):
     score = 0
     results = []
 
-    # Ensure URL format
+    # Ensure URL
     if not url.startswith("http"):
         url = "http://" + url
 
@@ -26,7 +26,7 @@ def check_phishing(url):
         results.append(("No HTTPS (Not Secure)", "danger"))
         score += 2
 
-    # 2. IP address instead of domain
+    # 2. IP address not domain
     if re.match(r"\d+\.\d+\.\d+\.\d+", domain):
         results.append(("Uses IP address instead of domain", "danger"))
         score += 3
@@ -42,7 +42,7 @@ def check_phishing(url):
         results.append(("URL is very long", "warn"))
         score += 1
 
-    # 5. Shorteners
+    # 5. Shortened link
     shorteners = ["bit.ly", "tinyurl", "rb.gy"]
     if any(s in url for s in shorteners):
         results.append(("URL shortener detected", "danger"))
@@ -74,8 +74,7 @@ def check_phishing(url):
 
     return score, results
 
-
-# --- GUI ---
+#Gui
 class PhishingApp:
     def __init__(self, root):
         self.root = root
@@ -146,7 +145,7 @@ class PhishingApp:
         self.animate_text(output)
 
 
-# --- RUN ---
+#run
 if __name__ == "__main__":
     root = tk.Tk()
     app = PhishingApp(root)
