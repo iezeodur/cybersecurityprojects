@@ -1,181 +1,190 @@
-# 🔐 HashVat GUI – Hashcat Frontend
+# 🔐 HashWraith
 
-A simple and powerful **Tkinter-based GUI** for running Hashcat without needing to use the command line.
+### Advanced Hashcat GUI by afrodaemon
+
+HashWraith is a lightweight yet powerful graphical interface for **Hashcat**, built to streamline password cracking workflows without sacrificing flexibility.
+
+Designed for **CTF players, penetration testers, and cybersecurity professionals**, it automates setup, reduces command-line complexity, and provides a clean, real-time interface for running attacks.
 
 ---
 
 ## 🚀 Features
 
-* 🔑 Select hash types (MD5, SHA1, NTLM, WPA/WPA2)
-* ⚔️ Multiple attack modes:
+### 🔍 Intelligent Automation
 
-  * Straight (wordlist)
-  * Combination
-  * Brute Force (mask)
-  * Hybrid
-* 📂 File picker for hashes and wordlists
-* 📺 Real-time output display
-* ⚡ Multithreaded execution (no UI freezing)
+* **Auto-detects Hashcat installation**
+
+  * Searches common system paths
+  * Falls back to system `PATH`
+* **Automatic hash type detection**
+
+  * MD5 → 32 chars
+  * SHA1 → 40 chars
+  * SHA256 → 64 chars
+  * SHA512 → 128 chars
+
+### 📂 Smart Resource Handling
+
+* Built-in discovery of common wordlists (e.g., `rockyou.txt`)
+* Manual file selection for:
+
+  * Hash files
+  * Wordlists
+  * Rule files
+
+### ⚔️ Attack Modes
+
+* **Straight (Dictionary)** `-a 0`
+* **Brute Force (Mask)** `-a 3`
+* **Hybrid Attacks** `-a 6`
+
+### ⚙️ Advanced Controls
+
+* Rule-based cracking (`-r`)
+* Optimized kernels (`-O`)
+* Ignore potfile (`--potfile-disable`)
+* CPU / GPU selection (`-D`)
+* Custom output file support
+
+### 🖥️ Real-Time Execution
+
+* Live Hashcat output console
+* Clean terminal-style UI
+* Scrollable logging
+
+### 🧵 Performance & Stability
+
+* Threaded execution (no UI freezing)
+* Automatic environment validation (OpenCL check)
 
 ---
 
-## 🖼️ Screenshot
+## 🛠️ Tech Stack
 
-```md
-![HashVat GUI](screenshots/gui.png)
-```
+* **Language:** Python 3
+* **GUI Framework:** Tkinter
+* **Core Engine:** Hashcat
 
----
+**Libraries Used:**
 
-## ⚙️ Requirements
-
-* Python 3.x
-* Hashcat installed and added to system PATH
-
-Check installation:
-
-```bash
-hashcat --help
-```
+* `subprocess`
+* `threading`
+* `os`
+* `shutil`
 
 ---
 
 ## 📦 Installation
 
+### 1. Clone the Repository
+
 ```bash
-git clone https://github.com/yourusername/hashvat-gui.git
-cd hashvat-gui
+git clone https://github.com/yourusername/hashwraith.git
+cd hashwraith
+```
+
+### 2. Install Requirements
+
+No external dependencies required (uses standard Python libraries)
+
+### 3. Install Hashcat
+
+Download from: https://hashcat.net/hashcat/
+
+Ensure one of the following:
+
+* `hashcat.exe` is in the project directory
+* OR inside a `/hashcat/` folder
+* OR installed globally and available in your system `PATH`
+
+---
+
+## ▶️ Usage
+
+```bash
 python main.py
 ```
 
+### 🔄 Workflow
+
+1. Select your **hash file**
+2. Hash type is **auto-detected** (or manually set)
+3. Choose attack mode:
+
+   * Dictionary
+   * Brute force
+   * Hybrid
+4. Load:
+
+   * Wordlist / Mask / Rules
+5. Click **🚀 Start Cracking**
+
 ---
 
-## 🧠 How It Works
+## 📸 Screenshots (Optional)
 
-The GUI dynamically builds a Hashcat command based on user selections:
+Add images like:
 
-* `-m` → Hash type
-* `-a` → Attack mode
-* Wordlist or mask added depending on attack type
-
-Example:
-
-```bash
-hashcat -m 0 -a 0 hashes.txt rockyou.txt
+```
+/images/gui.png
+/images/output.png
+/images/settings.png
 ```
 
 ---
 
-## 🛠️ Usage
+## 🧠 Example Use Cases
 
-### 1. Select Hash Type
-
-Choose the correct algorithm:
-
-* MD5 → `0`
-* SHA1 → `100`
-* NTLM → `1000`
-* WPA/WPA2 → `2500`
+* CTF competitions (PicoCTF, HTB, TryHackMe)
+* Password auditing & recovery
+* Red team engagements
+* Learning hash cracking techniques
 
 ---
 
-### 2. Select Attack Mode
+## ⚠️ Requirements
 
-* `0` → Straight (wordlist)
-* `3` → Brute force (mask)
-* `6` → Hybrid
-
----
-
-### 3. Load Required Files
-
-* Hash file
-* Wordlist (if needed)
+* Python 3.x
+* Hashcat installed
+* OpenCL-compatible GPU (recommended)
 
 ---
 
-### 4. Enter Mask (Optional)
+## 🔒 Disclaimer
 
-Example:
-
-```bash
-?a?a?a?a
-```
-
----
-
-### 5. Start Cracking
-
-Click:
-
-```
-🚀 Start Cracking
-```
-
----
-
-## 💻 Key Code Highlights
-
-### Multithreading (Prevents Freezing)
-
-```python
-thread = threading.Thread(target=self.execute)
-thread.start()
-```
-
----
-
-### Command Builder
-
-```python
-cmd = ["hashcat", "-m", mode, "-a", attack]
-```
-
----
-
-### Real-Time Output Streaming
-
-```python
-for line in process.stdout:
-    self.output.insert(tk.END, line)
-    self.output.see(tk.END)
-```
-
----
-
-## ⚠️ Notes
-
-* Ensure Hashcat is properly installed
-* WPA cracking requires `.cap` or `.hccapx` files
-* Performance depends on GPU/CPU power
-
----
-
-## 🧪 Future Improvements
-
-* ✅ Progress bar (hash rate, % complete)
-* ⏸️ Pause / Stop button
-* 🧠 Auto-detect hash type
-* 💾 Save cracked passwords
-* 🎨 Advanced UI (hacker-style dashboard)
-
----
-
-## 📜 Disclaimer
-
-This project is for **educational and ethical security testing only**.
-Do **not** use it on systems without permission.
-
----
-
-## ⭐ Contributing
-
-Feel free to fork, improve, and submit pull requests!
+This tool is intended for **educational and authorized security testing only**.
+Unauthorized use against systems without permission is illegal.
 
 ---
 
 ## 👨‍💻 Author
 
-**Ikenna Ezeodurukwe**
+**afrodaemon**
+Cybersecurity | Offensive Security | CTF
+
+---
+
+## 🧩 Project Highlights
+
+* Automates complex Hashcat CLI workflows
+* Reduces friction for beginners
+* Demonstrates offensive security tooling skills
+* Strong portfolio project for cybersecurity roles
+
+---
+
+## ⭐ Future Improvements
+
+* Signature-based hash detection (beyond length)
+* Built-in wordlist downloader
+* Session resume UI
+* Cross-platform support (Linux/macOS)
+* Enhanced UI/UX themes
+
+---
+
+## 💀 Branding
+
+Part of the **afrodaemon Toolset** — offensive security tools with speed, precision, and control.
 
 ---
