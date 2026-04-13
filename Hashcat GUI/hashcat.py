@@ -2,113 +2,235 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import subprocess
 import threading
+import os
+import shutil
 
-# app start
+# --- AUTO DETECT HASHCAT ---
+def find_hashcat():
+    possible_paths = [
+        "./hashcat.exe",
+        "./hashcat/hashcat.exe",
+        "C:/hashcat/hashcat.exe",
+        "C:/Program Files/hashcat/hashcat.exe",
+        "C:/Program Files (x86)/hashcat/hashcat.exe",
+        os.path.expanduser("~/Downloads/hashcat-6.2.6/hashcat.exe"),
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            return os.path.abspath(path)
+
+    path = shutil.which("hashcat")
+    if path:
+        return path
+
+    return None
+
+
+#  Automstivally detect hash type, hash mode is determined based on hash string length
+def detect_hash_type(hash_value):
+    length = len(hash_value.strip())
+    if length == 32:
+        return "0"
+    elif length == 40:
+        return "100"
+    elif length == 64:
+        return "1400"
+    elif length == 128:
+        return "1700"
+    return None
+
+
+# Search typical locations for popular wordlists like rockyou
+def find_wordlists():
+    common = [
+        "rockyou.txt",
+        "C:/wordlists/rockyou.txt",
+        "/usr/share/wordlists/rockyou.txt"
+    ]
+
+    found = []
+    for path in common:
+        if os.path.exists(path):
+            found.append(os.path.abspath(path))
+
+    return found
+
+
+# Handles UI, user interaction, and Hashcat execution
 class HashcatGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("HashVat GUI 🔐")
-        self.root.geometry("900x600")
+        self.root.title("HashWraith by afrodaemon 🔐")
+        self.root.geometry("900x650")
         self.root.configure(bg="#0f172a")
 
-    
+        # Application variables
         self.hash_type = tk.StringVar(value="0")
         self.attack_mode = tk.StringVar(value="0")
         self.hash_file = tk.StringVar()
         self.wordlist = tk.StringVar()
         self.mask = tk.StringVar()
+        self.rule_file = tk.StringVar()
+        self.output_file = tk.StringVar(value="cracked.txt")
+        self.device_type = tk.StringVar(value="2")
+        self.selected_wordlist = tk.StringVar()
+        self.ignore_potfile = tk.BooleanVar()
+        self.optimized = tk.BooleanVar()
 
-        
+        # Auto detect, scans common directories and system PATH to locate hashcat
+        self.hashcat_path = find_hashcat()
+        self.wordlists_found = find_wordlists()
+
         self.build_ui()
 
     def build_ui(self):
         frame = tk.Frame(self.root, bg="#0f172a")
         frame.pack(pady=10)
 
-    
         tk.Label(frame, text="Hash Type (-m)", fg="white", bg="#0f172a").grid(row=0, column=0)
         ttk.Combobox(frame, textvariable=self.hash_type, values=[
-            "0 - MD5",
-            "100 - SHA1",
-            "1000 - NTLM",
-            "2500 - WPA/WPA2"
+            "0 - MD5", "100 - SHA1", "1000 - NTLM",
+            "1400 - SHA256", "1700 - SHA512"
         ]).grid(row=0, column=1)
 
-    
         tk.Label(frame, text="Attack Mode (-a)", fg="white", bg="#0f172a").grid(row=1, column=0)
         ttk.Combobox(frame, textvariable=self.attack_mode, values=[
-            "0 - Straight",
-            "1 - Combination",
-            "3 - Brute Force",
-            "6 - Hybrid"
+            "0 - Straight", "3 - Brute Force", "6 - Hybrid"
         ]).grid(row=1, column=1)
 
-    
         tk.Button(frame, text="Select Hash File", command=self.load_hash).grid(row=2, column=0)
         tk.Label(frame, textvariable=self.hash_file, fg="cyan", bg="#0f172a").grid(row=2, column=1)
 
-    
         tk.Button(frame, text="Select Wordlist", command=self.load_wordlist).grid(row=3, column=0)
         tk.Label(frame, textvariable=self.wordlist, fg="cyan", bg="#0f172a").grid(row=3, column=1)
 
-    
-        tk.Label(frame, text="Mask (?a?a?a)", fg="white", bg="#0f172a").grid(row=4, column=0)
-        tk.Entry(frame, textvariable=self.mask).grid(row=4, column=1)
+        tk.Label(frame, text="Built-in Wordlists", fg="white", bg="#0f172a").grid(row=4, column=0)
+        ttk.Combobox(frame, textvariable=self.selected_wordlist,
+                     values=self.wordlists_found).grid(row=4, column=1)
 
-        
-        tk.Button(self.root, text="🚀 Start Cracking", bg="#22c55e", command=self.run_hashcat).pack(pady=10)
+        tk.Label(frame, text="Mask", fg="white", bg="#0f172a").grid(row=5, column=0)
+        tk.Entry(frame, textvariable=self.mask).grid(row=5, column=1)
 
-    
+        tk.Button(frame, text="Select Rules", command=self.load_rules).grid(row=6, column=0)
+        tk.Label(frame, textvariable=self.rule_file, fg="cyan", bg="#0f172a").grid(row=6, column=1)
+
+        tk.Label(frame, text="Output File", fg="white", bg="#0f172a").grid(row=7, column=0)
+        tk.Entry(frame, textvariable=self.output_file).grid(row=7, column=1)
+
+        tk.Label(frame, text="Device (-D)", fg="white", bg="#0f172a").grid(row=8, column=0)
+        ttk.Combobox(frame, textvariable=self.device_type,
+                     values=["1 - CPU", "2 - GPU"]).grid(row=8, column=1)
+
+        tk.Checkbutton(frame, text="Optimized (-O)", variable=self.optimized,
+                       fg="white", bg="#0f172a").grid(row=9, column=0)
+
+        tk.Checkbutton(frame, text="Ignore Potfile", variable=self.ignore_potfile,
+                       fg="white", bg="#0f172a").grid(row=9, column=1)
+
+        # Display
+        tk.Label(frame, text="Hashcat Path:", fg="white", bg="#0f172a").grid(row=10, column=0)
+        tk.Label(frame,
+                 text=self.hashcat_path if self.hashcat_path else "❌ Not Found",
+                 fg="orange", bg="#0f172a").grid(row=10, column=1)
+
+        tk.Button(self.root, text="🚀 Start Cracking", bg="#22c55e",
+                  command=self.run_hashcat).pack(pady=10)
+
         self.output = tk.Text(self.root, bg="black", fg="lime", height=20)
         self.output.pack(fill="both", expand=True)
 
     def load_hash(self):
         file = filedialog.askopenfilename()
-        self.hash_file.set(file)
+        if file:
+            self.hash_file.set(os.path.abspath(file))
 
     def load_wordlist(self):
         file = filedialog.askopenfilename()
-        self.wordlist.set(file)
+        if file:
+            self.wordlist.set(os.path.abspath(file))
+
+    def load_rules(self):
+        file = filedialog.askopenfilename()
+        if file:
+            self.rule_file.set(os.path.abspath(file))
 
     def run_hashcat(self):
-        thread = threading.Thread(target=self.execute)
-        thread.start()
+        threading.Thread(target=self.execute).start()
 
     def execute(self):
         self.output.delete(1.0, tk.END)
 
-        # Extract only numbers
+        if not self.hashcat_path:
+            self.output.insert(tk.END, "❌ Hashcat not found automatically.\n")
+            return
+
+        hashcat_dir = os.path.dirname(self.hashcat_path)
+
+        if not os.path.exists(os.path.join(hashcat_dir, "OpenCL")):
+            self.output.insert(tk.END, "❌ OpenCL folder missing\n")
+            return
+
         mode = self.hash_type.get().split(" ")[0]
         attack = self.attack_mode.get().split(" ")[0]
 
-        cmd = ["hashcat", "-m", mode, "-a", attack]
+        hash_file = self.hash_file.get()
+        wordlist = self.selected_wordlist.get() or self.wordlist.get()
+        mask = self.mask.get().strip()
 
-        if self.hash_file.get():
-            cmd.append(self.hash_file.get())
+        if not hash_file or not os.path.exists(hash_file):
+            self.output.insert(tk.END, "❌ Invalid hash file\n")
+            return
 
-        if attack == "0":  # Straight
-            cmd.append(self.wordlist.get())
-
-        elif attack == "3":  # Brute force
-            cmd.append(self.mask.get())
-
-        elif attack == "6":  # Hybrid
-            cmd.append(self.wordlist.get())
-            cmd.append(self.mask.get())
-
-        self.output.insert(tk.END, f"Running: {' '.join(cmd)}\n\n")
-
+        # Automatically detect hash
         try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            with open(hash_file, "r") as f:
+                detected = detect_hash_type(f.readline().strip())
+                if detected:
+                    mode = detected
+                    self.output.insert(tk.END, f"🔍 Detected hash mode: {mode}\n")
+        except:
+            pass
 
-            for line in process.stdout:
-                self.output.insert(tk.END, line)
-                self.output.see(tk.END)
+        cmd = [self.hashcat_path, "-m", mode, "-a", attack, hash_file]
 
-        except Exception as e:
-            self.output.insert(tk.END, f"Error: {e}")
+        if attack == "0":
+            cmd.append(wordlist)
+        elif attack == "3":
+            cmd.append(mask)
+        elif attack == "6":
+            cmd.extend([wordlist, mask])
+
+        if self.rule_file.get():
+            cmd.extend(["-r", self.rule_file.get()])
+
+        cmd.extend(["-o", self.output_file.get(), "--status"])
+
+        if self.optimized.get():
+            cmd.append("-O")
+
+        if self.ignore_potfile.get():
+            cmd.append("--potfile-disable")
+
+        cmd.extend(["-D", self.device_type.get().split(" ")[0]])
+        cmd.extend(["--session", "hashvat_session"])
+
+        self.output.insert(tk.END, f"Running:\n{' '.join(cmd)}\n\n")
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            cwd=hashcat_dir
+        )
+
+        for line in process.stdout:
+            self.output.insert(tk.END, line)
+            self.output.see(tk.END)
 
 
+# RUN
 if __name__ == "__main__":
     root = tk.Tk()
     app = HashcatGUI(root)
