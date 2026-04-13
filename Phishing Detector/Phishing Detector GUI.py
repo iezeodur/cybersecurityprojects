@@ -8,14 +8,13 @@ import base64
 from urllib.parse import urlparse
 from datetime import datetime
 
-# 🔐 ADD YOUR API KEYS HERE
+# Add your API keys for external threat intelligence services
 VT_API_KEY = "YOUR_VIRUS_TOTAL_API"
 GSB_API_KEY = "YOUR_GOOGLE_API_KEY"
 
 
-# -------------------------------
-# 🔍 PHISHING CHECK ENGINE
-# -------------------------------
+
+#Perform heuristic analysis on the given URL
 def check_phishing(url):
     score = 0
     results = []
@@ -26,30 +25,36 @@ def check_phishing(url):
     parsed = urlparse(url)
     domain = parsed.netloc
 
+#https check 
     if url.startswith("https://"):
         results.append(("HTTPS enabled", "safe"))
     else:
         results.append(("No HTTPS (Not Secure)", "danger"))
         score += 2
 
+#IP address check
     if re.match(r"\d+\.\d+\.\d+\.\d+", domain):
         results.append(("Uses IP address instead of domain", "danger"))
         score += 3
 
+#suspicious keyword check
     keywords = ["login", "verify", "bank", "secure", "account", "update"]
     if any(k in url.lower() for k in keywords):
         results.append(("Suspicious keywords in URL", "warn"))
         score += 2
 
+#url length check
     if len(url) > 75:
         results.append(("URL is very long", "warn"))
         score += 1
-
+ 
+#url shortener detection 
     shorteners = ["bit.ly", "tinyurl", "rb.gy"]
     if any(s in url for s in shorteners):
         results.append(("URL shortener detected", "danger"))
         score += 3
 
+#whois domain check
     try:
         domain_info = whois.whois(domain)
         if domain_info.creation_date:
@@ -61,6 +66,7 @@ def check_phishing(url):
         results.append(("WHOIS lookup failed", "warn"))
         score += 1
 
+#website reachability
     try:
         r = requests.get(url, timeout=5)
         if r.status_code == 200:
@@ -75,9 +81,9 @@ def check_phishing(url):
     return score, results, domain, url
 
 
-# -------------------------------
-# 🔑 VIRUSTOTAL API
-# -------------------------------
+
+# virus Total API
+
 def check_virustotal(url):
     headers = {"x-apikey": VT_API_KEY}
 
@@ -99,38 +105,37 @@ def check_virustotal(url):
         return "VirusTotal: Error ⚠️"
 
 
-# -------------------------------
-# 🛡 GOOGLE SAFE BROWSING API
-# -------------------------------
-#def check_google_safe(url):
-    #endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={GSB_API_KEY}"
 
-#     payload = {
-#         "client": {"clientId": "phishing-detector", "clientVersion": "1.0"},
-#         "threatInfo": {
-#             "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING"],
-#             "platformTypes": ["ANY_PLATFORM"],
-#             "threatEntryTypes": ["URL"],
-#             "threatEntries": [{"url": url}],
-#         },
-#     }
-# 
-#     try:
-#         response = requests.post(endpoint, json=payload)
-#         data = response.json()
-# 
-#         if "matches" in data:
-#             return "Google Safe Browsing: Threat detected ❗"
-#         else:
-#             return "Google Safe Browsing: No threats found ✅"
-# 
-#     except:
-#         return "Google Safe Browsing: Error ⚠️"
+#Google Safe browsing API
+
+def check_google_safe(url):
+    endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={GSB_API_KEY}"
+
+     payload = {
+         "client": {"clientId": "phishing-detector", "clientVersion": "1.0"},
+         "threatInfo": {
+             "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING"],
+             "platformTypes": ["ANY_PLATFORM"],
+             "threatEntryTypes": ["URL"],
+             "threatEntries": [{"url": url}],
+         },
+     }
+ 
+     try:
+         response = requests.post(endpoint, json=payload)
+         data = response.json()
+ 
+         if "matches" in data:
+             return "Google Safe Browsing: Threat detected ❗"
+         else:
+             return "Google Safe Browsing: No threats found ✅"
+ 
+     except:
+         return "Google Safe Browsing: Error ⚠️"
 
 
-# -------------------------------
-# 🌐 REPUTATION
-# -------------------------------
+
+#Combine VirusTotal + domain age intelligence
 def get_reputation(domain, url):
     rep = []
 
@@ -162,9 +167,9 @@ def get_reputation(domain, url):
     return rep
 
 
-# -------------------------------
-# 🧠 GUI APP
-# -------------------------------
+
+# User Interface
+
 class PhishingApp:
     def __init__(self, root):
         self.root = root
@@ -247,9 +252,9 @@ class PhishingApp:
         self.animate_text(output)
 
 
-# -------------------------------
-# ▶ RUN
-# -------------------------------
+
+# run
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = PhishingApp(root)
