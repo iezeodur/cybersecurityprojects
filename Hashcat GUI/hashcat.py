@@ -5,7 +5,7 @@ import threading
 import os
 import shutil
 
-# --- AUTO DETECT HASHCAT ---
+# Automatically detect hashcat in system
 def find_hashcat():
     possible_paths = [
         "./hashcat.exe",
