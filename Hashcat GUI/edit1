@@ -4,8 +4,10 @@ import subprocess
 import threading
 import os
 import shutil
+import re
+from collections import Counter
 
-# --- AUTO DETECT HASHCAT 
+# --- AUTO DETECT HASHCAT ---
 def find_hashcat():
     possible_paths = [
         "./hashcat.exe",
@@ -27,17 +29,26 @@ def find_hashcat():
     return None
 
 
-# --- AUTO DETECT HASH TYPE ---
+# --- SMART HASH DETECTION ---
 def detect_hash_type(hash_value):
-    length = len(hash_value.strip())
-    if length == 32:
-        return "0"
-    elif length == 40:
-        return "100"
-    elif length == 64:
-        return "1400"
-    elif length == 128:
-        return "1700"
+    hash_value = hash_value.strip()
+
+    patterns = [
+        (r"^[a-fA-F0-9]{32}$", "0"),        # MD5
+        (r"^[a-fA-F0-9]{40}$", "100"),      # SHA1
+        (r"^[a-fA-F0-9]{64}$", "1400"),     # SHA256
+        (r"^[a-fA-F0-9]{128}$", "1700"),    # SHA512
+        (r"^[a-fA-F0-9]{32}:[a-fA-F0-9]{32}$", "1000"),  # NTLM
+        (r"^\$1\$.*", "500"),               # md5crypt
+        (r"^\$2[aby]?\$.*", "3200"),        # bcrypt
+        (r"^\$5\$.*", "7400"),              # sha256crypt
+        (r"^\$6\$.*", "1800"),              # sha512crypt
+    ]
+
+    for pattern, mode in patterns:
+        if re.match(pattern, hash_value):
+            return mode
+
     return None
 
 
@@ -57,7 +68,7 @@ def find_wordlists():
     return found
 
 
-# --- MAIN APP ---
+# --- GUI ---
 class HashcatGUI:
     def __init__(self, root):
         self.root = root
@@ -65,7 +76,6 @@ class HashcatGUI:
         self.root.geometry("900x650")
         self.root.configure(bg="#0f172a")
 
-        # VARIABLES
         self.hash_type = tk.StringVar(value="0")
         self.attack_mode = tk.StringVar(value="0")
         self.hash_file = tk.StringVar()
@@ -78,7 +88,6 @@ class HashcatGUI:
         self.ignore_potfile = tk.BooleanVar()
         self.optimized = tk.BooleanVar()
 
-        # AUTO DETECT HASHCAT
         self.hashcat_path = find_hashcat()
         self.wordlists_found = find_wordlists()
 
@@ -88,12 +97,7 @@ class HashcatGUI:
         frame = tk.Frame(self.root, bg="#0f172a")
         frame.pack(pady=10)
 
-        tk.Label(frame, text="Hash Type (-m)", fg="white", bg="#0f172a").grid(row=0, column=0)
-        ttk.Combobox(frame, textvariable=self.hash_type, values=[
-            "0 - MD5", "100 - SHA1", "1000 - NTLM",
-            "1400 - SHA256", "1700 - SHA512"
-        ]).grid(row=0, column=1)
-
+      
         tk.Label(frame, text="Attack Mode (-a)", fg="white", bg="#0f172a").grid(row=1, column=0)
         ttk.Combobox(frame, textvariable=self.attack_mode, values=[
             "0 - Straight", "3 - Brute Force", "6 - Hybrid"
@@ -128,7 +132,6 @@ class HashcatGUI:
         tk.Checkbutton(frame, text="Ignore Potfile", variable=self.ignore_potfile,
                        fg="white", bg="#0f172a").grid(row=9, column=1)
 
-        # 🔥 DISPLAY ONLY (no button anymore)
         tk.Label(frame, text="Hashcat Path:", fg="white", bg="#0f172a").grid(row=10, column=0)
         tk.Label(frame,
                  text=self.hashcat_path if self.hashcat_path else "❌ Not Found",
@@ -162,14 +165,10 @@ class HashcatGUI:
         self.output.delete(1.0, tk.END)
 
         if not self.hashcat_path:
-            self.output.insert(tk.END, "❌ Hashcat not found automatically.\n")
+            self.output.insert(tk.END, "❌ Hashcat not found\n")
             return
 
         hashcat_dir = os.path.dirname(self.hashcat_path)
-
-        if not os.path.exists(os.path.join(hashcat_dir, "OpenCL")):
-            self.output.insert(tk.END, "❌ OpenCL folder missing\n")
-            return
 
         mode = self.hash_type.get().split(" ")[0]
         attack = self.attack_mode.get().split(" ")[0]
@@ -182,15 +181,22 @@ class HashcatGUI:
             self.output.insert(tk.END, "❌ Invalid hash file\n")
             return
 
-        # AUTO DETECT HASH
+        # --- AUTO DETECT HASH ---
         try:
             with open(hash_file, "r") as f:
-                detected = detect_hash_type(f.readline().strip())
-                if detected:
-                    mode = detected
-                    self.output.insert(tk.END, f"🔍 Detected hash mode: {mode}\n")
-        except:
-            pass
+                lines = [line.strip() for line in f.readlines()[:10]]
+
+            detected = [detect_hash_type(h) for h in lines if h]
+            detected = [d for d in detected if d]
+
+            if detected:
+                mode = Counter(detected).most_common(1)[0][0]
+                self.output.insert(tk.END, f"🔍 Detected hash mode: {mode}\n")
+            else:
+                self.output.insert(tk.END, "⚠️ Could not detect hash type\n")
+
+        except Exception as e:
+            self.output.insert(tk.END, f"⚠️ Detection error: {e}\n")
 
         cmd = [self.hashcat_path, "-m", mode, "-a", attack, hash_file]
 
@@ -213,7 +219,7 @@ class HashcatGUI:
             cmd.append("--potfile-disable")
 
         cmd.extend(["-D", self.device_type.get().split(" ")[0]])
-        cmd.extend(["--session", "hashvat_session"])
+        cmd.extend(["--session", "hashwraith_session"])
 
         self.output.insert(tk.END, f"Running:\n{' '.join(cmd)}\n\n")
 
@@ -230,7 +236,7 @@ class HashcatGUI:
             self.output.see(tk.END)
 
 
-# RUN
+# --- RUN ---
 if __name__ == "__main__":
     root = tk.Tk()
     app = HashcatGUI(root)
