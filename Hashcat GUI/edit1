@@ -7,7 +7,7 @@ import shutil
 import re
 from collections import Counter
 
-# --- AUTO DETECT HASHCAT ---
+#Auto detect Hashcat in PC
 def find_hashcat():
     possible_paths = [
         "./hashcat.exe",
@@ -29,7 +29,7 @@ def find_hashcat():
     return None
 
 
-# --- SMART HASH DETECTION ---
+#Smart Hash detection
 def detect_hash_type(hash_value):
     hash_value = hash_value.strip()
 
@@ -52,7 +52,7 @@ def detect_hash_type(hash_value):
     return None
 
 
-# --- FIND WORDLISTS ---
+#Find common wordlists
 def find_wordlists():
     common = [
         "rockyou.txt",
@@ -68,7 +68,7 @@ def find_wordlists():
     return found
 
 
-# --- GUI ---
+#User Interface
 class HashcatGUI:
     def __init__(self, root):
         self.root = root
@@ -236,7 +236,7 @@ class HashcatGUI:
             self.output.see(tk.END)
 
 
-# --- RUN ---
+#Run
 if __name__ == "__main__":
     root = tk.Tk()
     app = HashcatGUI(root)
