@@ -68,6 +68,4 @@ Do not use any tool or script for unauthorized activities.
 
 ---
 
-# 👨‍💻 Author
-
 ## Ikenna Ezeodurukwe
