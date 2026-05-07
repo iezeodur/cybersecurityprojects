@@ -1,4 +1,4 @@
-# <img width="128" height="128" alt="image" src="https://github.com/user-attachments/assets/84ee5da9-7ab3-48e4-ab45-6eebe6877afd" />Cybersecurity Projects Portfolio 
+# Cybersecurity Projects Portfolio 
 
 
 Welcome to my Cybersecurity Projects repository — a growing collection of hands-on security tools, labs, automation scripts, and defensive/offensive security projects built to strengthen practical cybersecurity skills.
@@ -71,9 +71,3 @@ Do not use any tool or script for unauthorized activities.
 # 👨‍💻 Author
 
 ## Ikenna Ezeodurukwe
-
-Cybersecurity enthusiast focused on:
-- Security Operations
-- Threat Detection
-- Security Automation
-- Defensive Security Engineering
